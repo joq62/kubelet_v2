@@ -7,8 +7,6 @@ all:
 	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
 #	node
 	erlc -I ../../interfaces -o ebin ../../support/src/*.erl;
-#	kube_logger
-	erlc -I ../../interfaces -o ebin ../../kube_logger/src/*.erl;
 #	application
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
