@@ -1,12 +1,8 @@
 all:
 #	service
 	rm -rf ebin/*;
-#	interfaces
-	erlc -I ../../interfaces -o ebin ../../interfaces/*.erl;
 #	node
 	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
-#	node
-	erlc -I ../../interfaces -o ebin ../../support/src/*.erl;
 #	application
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
