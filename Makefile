@@ -3,8 +3,6 @@ all:
 	rm -rf ebin/*;
 #	kubelet
 	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
-#	kube_pod
-	erlc -I ../../interfaces -o ebin ../../kube_pod/src/*.erl;
 #	application
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
