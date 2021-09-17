@@ -2,7 +2,9 @@ all:
 #	service
 	rm -rf ebin/*;
 #	support
+	cp ../support/src/*.app ebin;
 	erlc -I ../../interfaces -o ebin ../../kube_support/src/*.erl;
+	erlc -I ../../interfaces -o ebin ../support/src/*.erl;
 #	etcd
 	cp ../etcd/src/*.app ebin;
 	erlc -I ../../interfaces -o ebin ../../kube_dbase/src/*.erl;

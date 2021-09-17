@@ -61,8 +61,8 @@ init([]) ->
     }.
 
 children()->
-    [?CHILD(support,worker),
-     ?CHILD(etcd,worker),
+    [%?CHILD(support,worker),
+     %?CHILD(etcd,worker),
      ?CHILD(kubelet,worker)].
 %% ====================================================================
 %% Internal functions
