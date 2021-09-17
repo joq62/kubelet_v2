@@ -1,8 +1,12 @@
 all:
 #	service
 	rm -rf ebin/*;
-#	kubelet
-	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
+#	support
+	erlc -I ../../interfaces -o ebin ../../kube_support/src/*.erl;
+#	etcd
+	cp ../etcd/src/*.app ebin;
+	erlc -I ../../interfaces -o ebin ../../kube_dbase/src/*.erl;
+	erlc -I ../../interfaces -o ebin ../etcd/src/*.erl;
 #	application
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
