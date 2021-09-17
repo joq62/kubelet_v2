@@ -9,6 +9,10 @@ all:
 	cp ../etcd/src/*.app ebin;
 	erlc -I ../../interfaces -o ebin ../../kube_dbase/src/*.erl;
 	erlc -I ../../interfaces -o ebin ../etcd/src/*.erl;
+#	kubelet
+	cp src/*.app ebin;
+	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
+	erlc -I ../../interfaces -o ebin src/*.erl;
 #	application
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
