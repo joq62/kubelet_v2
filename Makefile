@@ -1,21 +1,27 @@
 all:
 #	service
-	rm -rf ebin/*;
-#	interfaces
-	erlc -I ../../interfaces -o ebin ../../interfaces/*.erl;
-#	support
-	cp ../support/src/*.app ebin;
-	erlc -I ../../interfaces -o ebin ../../kube_support/src/*.erl;
-	erlc -I ../../interfaces -o ebin ../support/src/*.erl;
-#	etcd
-	cp ../etcd/src/*.app ebin;
-	erlc -I ../../interfaces -o ebin ../../kube_dbase/src/*.erl;
-	erlc -I ../../interfaces -o ebin ../etcd/src/*.erl;
-#	application
-	erlc -I ../../interfaces -o ebin ../../node/src/*.erl;
+	rm -rf ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
+	rm -rf *.applications ~/*.applications *configurations test_src/test_configurations;
+	rm -rf  *~ */*~  erl_cra*;
+#	app
 	cp src/*.app ebin;
 	erlc -o ebin src/*.erl;
-	rm -rf src/*.beam *.beam  test_src/*.beam test_ebin;
-	rm -rf  *~ */*~  erl_cra*;
-	rm -rf *_specs *_config *.log catalog;
 	echo Done
+unit_test:
+	rm -rf ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
+	rm -rf *.applications ~/*.applications *configurations;
+	rm -rf  *~ */*~  erl_cra*;
+	mkdir test_ebin;
+#	app
+	cp src/*.app ebin;
+	erlc -o ebin src/*.erl;
+#	test application
+	cp test_src/*.app test_ebin;
+	erlc -D unit_test -o test_ebin test_src/*.erl;
+	erl -pa ebin -pa test_ebin\
+	    -setcookie cookie_test\
+	    -sname kubelet\
+	    -unit_test monitor_node test\
+	    -unit_test cluster_id test\
+	    -unit_test cookie cookie_test\
+	    -run unit_test start_test test_src/test.config

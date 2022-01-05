@@ -1,91 +1,43 @@
 %%% -------------------------------------------------------------------
-%%% @author  : Joq Erlang
-%%% @doc : represent a logical vm  
+%%% Author  : uabjle
+%%% Description : resource discovery accroding to OPT in Action 
+%%% This service discovery is adapted to 
+%%% Type = application 
+%%% Instance ={ip_addr,{IP_addr,Port}}|{erlang_node,{ErlNode}}
 %%% 
-%%% Supports the system with standard erlang vm functionality, load and start
-%%% of an erlang application (downloaded from git hub) and "dns" support 
-%%% 
-%%% Make and start the board start SW.
-%%%  boot_service initiates tcp_server and l0isten on port
-%%%  Then it's standby and waits for controller to detect the board and start to load applications
-%%% 
-%%%     
+%%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(unit_test). 
+-module(kubelet_server). 
 
--behaviour(gen_server).
+-behaviour(gen_server). 
+
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-%-include("infra.hrl").
-%% --------------------------------------------------------------------
-%-include_lib("eunit/include/eunit.hrl").
-%% --------------------------------------------------------------------
-%% Key Data structures
-%% 
-%% --------------------------------------------------------------------
--record(state,{}).
-
-	  
+%-include("logger_infra.hrl").
 %% --------------------------------------------------------------------
 
-%% ====================================================================
-%% External functions
-%% ====================================================================
+-define(ScheduleInterval,1*30*1000).
 
-
-%% server interface
--export([start_test/1 %test suits	 
-	]).
-
--export([ping/0	 
+%% External exports
+-export([
 	]).
 
 
-
-
--export([start/0,
-	 stop/0
-	 ]).
-%% internal 
-%% gen_server callbacks
 -export([init/1, handle_call/3,handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
+-record(state, {
+	       }).
 
 %% ====================================================================
 %% External functions
 %% ====================================================================
-
-%C="https://"++Uid++":"++Pwd++"@github.com/"++Uid++"/"++SId++".git".
-
-%% Asynchrounus Signals
-start_test([TestConfig])->
-    io:format("TestConfig ~p~n",[file:consult(TestConfig)]),
-    application:start(?MODULE).
-
-%% Gen server function
-
-start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-stop()-> gen_server:call(?MODULE, {stop},infinity).
-
-
-%%----------------------------------------------------------------------
-ping()->
-    gen_server:call(?MODULE,{ping},infinity).
-
-%%___________________________________________________________________
-
-
-
-%%-----------------------------------------------------------------------
 
 
 %% ====================================================================
 %% Server functions
 %% ====================================================================
--define(TestSuit,[{app_start_test,start,[],20*5000}
-		 ,{test,start,[],infinity}
-		 ]).
+
 %% --------------------------------------------------------------------
 %% Function: init/1
 %% Description: Initiates the server
@@ -93,20 +45,13 @@ ping()->
 %%          {ok, State, Timeout} |
 %%          ignore               |
 %%          {stop, Reason}
-%
 %% --------------------------------------------------------------------
 init([]) ->
-    
-    % Testcases
-    Result=[{rpc:call(node(),M,F,A,T),M,F,A}||{M,F,A,T}<-?TestSuit],
-    case [{R,M,F,A}||{R,M,F,A}<-Result,
-	 R/=ok] of
-	[]->
-	    io:format("~p~n",[{?MODULE_STRING++" Sucessfull Unit Test Result"}]);
-	_->
-	    io:format("~p~n",[{?MODULE_STRING++" Failed test ",Result}])
-    end,
-    {ok, #state{}}.
+%   
+%    spawn(fun()->do_desired_state() end),
+ %   log:log(?logger_info(info,"server started",[])),
+    {ok, #state{}
+    }.
 
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -116,19 +61,46 @@ init([]) ->
 %%          {noreply, State}               |
 %%          {noreply, State, Timeout}      |
 %%          {stop, Reason, Reply, State}   | (terminate/2 is called)
-%%          {stop, Reason, State}            (aterminate/2 is called)
+%%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
-handle_call({ping}, _From, State) ->
-    Reply={pong,node(),?MODULE},
+handle_call({started_nodes},_From, State) ->
+    Reply=lib_status:node_started(),
+    {reply, Reply, State};
+handle_call({host_status},_From, State) ->
+    Reply=db_host:status(),
+    {reply, Reply, State};
+handle_call({host_status,Id},_From, State) ->
+    Reply=db_host:status(Id),
+    {reply, Reply, State};
+handle_call({node_status},_From, State) ->
+    Reply={node_status},
+    {reply, Reply, State};
+handle_call({node_status,Id},_From, State) ->
+    Reply={node_status,Id},
     {reply, Reply, State};
 
+
+handle_call({ping},_From, State) ->
+    Reply=pong,
+    {reply, Reply, State};
+handle_call({stopped},_From, State) ->
+    Reply=ok,
+    {reply, Reply, State};
+
+
+
+
+handle_call({not_implemented},_From, State) ->
+    Reply=not_implemented,
+    {reply, Reply, State};
 
 handle_call({stop}, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
 handle_call(Request, From, State) ->
-    Reply = {unmatched_signal,?MODULE,?LINE,Request,From},
+ %   log:log(?logger_info(ticket,"unmatched call",[Request, From])),
+    Reply = {ticket,"unmatched call",Request, From},
     {reply, Reply, State}.
 
 %% --------------------------------------------------------------------
@@ -139,12 +111,12 @@ handle_call(Request, From, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
-handle_cast({glurk}, State) ->
-
+handle_cast({desired_state}, State) ->
+    spawn(fun()->do_desired_state() end),
     {noreply, State};
 
 handle_cast(Msg, State) ->
-    io:format("unmatched match cast ~p~n",[{?MODULE,?LINE,Msg}]),
+  %  log:log(?logger_info(ticket,"unmatched cast",[Msg])),
     {noreply, State}.
 
 %% --------------------------------------------------------------------
@@ -153,11 +125,10 @@ handle_cast(Msg, State) ->
 %% Returns: {noreply, State}          |
 %%          {noreply, State, Timeout} |
 %%          {stop, Reason, State}            (terminate/2 is called)
-
+%% --------------------------------------------------------------------
 handle_info(Info, State) ->
-    io:format("unmatched match info ~p~n",[{?MODULE,?LINE,Info}]),
+ %   log:log(?logger_info(ticket,"unmatched info",[Info])),
     {noreply, State}.
-
 
 %% --------------------------------------------------------------------
 %% Function: terminate/2
@@ -178,17 +149,6 @@ code_change(_OldVsn, State, _Extra) ->
 %% --------------------------------------------------------------------
 %%% Internal functions
 %% --------------------------------------------------------------------
-%% --------------------------------------------------------------------
-%% Function: 
-%% Description:
-%% Returns: non
-%% --------------------------------------------------------------------
-
-
-%% --------------------------------------------------------------------
-%% Internal functions
-%% --------------------------------------------------------------------
-
-%% --------------------------------------------------------------------
-%% Internal functions
-%% --------------------------------------------------------------------
+do_desired_state()->
+     timer:sleep(?ScheduleInterval).
+		  

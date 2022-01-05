@@ -49,19 +49,9 @@ start()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
--define(APP,orginal).
+
 setup()->
-
-    %% Test env vars 
-   
-%    io:format("Line = ~p~n",[{?MODULE,?LINE}]),
-    
-    % Start a Service application 
-          rpc:call(node(),application,stop,[?APP],10*5000),
-    timer:sleep(500),
-    ok=rpc:call(node(),application,start,[?APP],10*5000),
-    	 
-
+    ok=application:start(kubelet),
     ok.
 
 
